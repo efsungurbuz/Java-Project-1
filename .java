@@ -1,0 +1,157 @@
+package efsun;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class FinalHomework {
+
+	private static String[] array = { "public", "System.out.println", "if", "private", "this", "main", "break",
+			"double", "implements", "import", "case", "extends", "try", "void", "char", "class", "static", "int", "try",
+			"String", "float", "while", "continue", "for", "package", "boolean", "do", "else", "else if" };
+	private static ArrayList<String> lines = new ArrayList<>();
+	private static String outputFile;
+
+	public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
+
+		Scanner scan = new Scanner(System.in);
+		System.out.print("Enter input file name: \n");
+		String inputFile = scan.nextLine();
+		System.out.print("Enter output file name: \n");
+		outputFile = scan.nextLine();
+		Scanner fileScan = new Scanner(new File(inputFile));
+		int index = 0;
+		while (fileScan.hasNext()) {
+			lines.add(index, fileScan.nextLine());
+			index++;
+		}
+		fileScan.close();
+
+		part1();
+		part2();
+		part3();
+	}
+
+	public static void part3() {
+
+		System.out.println("---------------------------------Methods---------------------------------");
+		for (int i = 0; i < lines.size(); i++) {
+			if ((lines.get(i).contains("public") || lines.get(i).contains("private") || lines.get(i).contains("static"))
+					&& !lines.get(i).contains("class") && !lines.get(i).contains(";")) {
+				int start = i + 1, openCount = 0, closeCount = 0, end = lines.size();
+				for (int j = i; j < lines.size(); j++) {
+					closeCount += lines.get(j).chars().filter(ch -> ch == '}').count();
+					openCount += lines.get(j).chars().filter(ch -> ch == '{').count();
+					if (openCount > 0 && openCount == closeCount) {
+						end = j + 1;
+						System.out.println(lines.get(i) + " between " + start + " - " + end);
+						break;
+					}
+				}
+			}
+		}
+
+		System.out.println("---------------------------------Loops---------------------------------");
+		boolean flag = true;
+		for (int i = 0; i < lines.size(); i++) {
+			if (((lines.get(i).contains("for") || lines.get(i).contains("while"))
+					&& (!lines.get(i).contains("\"for\"") || !lines.get(i).contains("\"while\"")))) {
+				if (lines.get(i).contains("for")) {
+					flag = true;
+				} else {
+					flag = false;
+				}
+				int start = i + 1, openCount = 0, closeCount = 0, end = lines.size();
+				for (int j = i; j < lines.size(); j++) {
+					closeCount += lines.get(j).chars().filter(ch -> ch == '}').count();
+					openCount += lines.get(j).chars().filter(ch -> ch == '{').count();
+					if (openCount > 0 && openCount == closeCount) {
+						end = j + 1;
+						System.out.println((flag ? "for loop" : "while loop") + " between " + start + " - " + end);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	public static void part2() {
+		System.out.println("----------------------Built-in language constructs-------------------");
+		for (int i = 0; i < lines.size(); i++) {
+			String[] currencies = lines.get(i).split(" ");
+			for (int m = 0; m < currencies.length; m++) {
+				if (currencies[m].equals("new") && (!currencies[m].contains("\"new\"")) && m < currencies.length - 1) {
+					System.out.println(currencies[m] + currencies[m + 1] + " in " + (i + 1) + ". line");
+				}
+
+				for (int j = 0; j < array.length; j++) {
+					if (currencies[m].contains(array[j]) && !currencies[m].contains("\"" + array[j] + "\"")) {
+						System.out.println(array[j] + " in " + (i + 1) + ". line");
+					}
+				}
+
+			}
+			if (lines.get(i).contains("import") && !lines.get(i).contains("\"import\"")) {
+				System.out.println(lines.get(i) + " in " + (i + 1) + ". line");
+			}
+		}
+	}
+
+	public static void part1() throws FileNotFoundException, UnsupportedEncodingException {
+		PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
+		for (int i = 0; i < lines.size(); i++) {
+			boolean flag = true;
+			String line = "";
+			String[] currencies = lines.get(i).split(" ");
+			if (lines.get(i).contains("//")) {
+				for (int j = 0; j < currencies.length; j++) {
+					int index = currencies[j].indexOf("//");
+					if (index != -1) {
+						flag = false;
+					}
+					if (flag) {
+						line += currencies[j];
+					}
+				}
+			} else if (lines.get(i).contains("/*") && !lines.get(i).contains("\"/*\"")) {
+				for (int j = 0; j < currencies.length; j++) {
+					int index = currencies[j].indexOf("/*");
+					if (index != -1) {
+						line += currencies[j].substring(0, index);
+						flag = false;
+					}
+					if (flag) {
+						line += currencies[j];
+					}
+				}
+				int k;
+				for (k = i; k < lines.size(); k++) {
+					currencies = lines.get(k).split(" ");
+					if (lines.get(k).contains("*/") && !lines.get(i).contains("\"*/\"")) {
+						for (int j = 0; j < currencies.length; j++) {
+							int index = currencies[j].indexOf("*/");
+							if (flag) {
+								line += currencies[j];
+							}
+							if (index != -1) {
+								line += currencies[j].substring(index + 2, currencies[j].length());
+								flag = true;
+							}
+						}
+
+						break;
+					}
+				}
+				i = k;
+			} else {
+				line = lines.get(i);
+			}
+
+			writer.println(line);
+		}
+		writer.close();
+	}
+}
